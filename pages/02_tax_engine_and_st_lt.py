@@ -1,9 +1,8 @@
+"""02 — Tax Engine & ST/LT Classification"""
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-"""02 — Tax Engine & ST/LT Classification"""
 import streamlit as st
 st.set_page_config(page_title="Tax Engine", page_icon="💰", layout="wide")
 

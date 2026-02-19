@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 """03 — Sell Handling & Tax-Loss Harvesting"""
 import streamlit as st
 st.set_page_config(page_title="Sell Handling & TLH", page_icon="📉", layout="wide")

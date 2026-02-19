@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 """04 — Dividends & Cash Flows"""
 import streamlit as st
 st.set_page_config(page_title="Dividends & Cashflows", page_icon="💵", layout="wide")

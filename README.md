@@ -38,3 +38,13 @@ It supports two execution modes:
 
 ## Run locally
 
+pip install -r requirements.txt
+streamlit run portfolio_returns_engine_code.py
+
+---
+
+## Known Limitations (MSBA v1)
+
+- Wash-sale rules are not enforced
+- Dividend taxes not separately modeled
+- Transaction costs/slippage not included

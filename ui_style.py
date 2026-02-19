@@ -451,6 +451,15 @@ div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover {
                 inset 0 1px 0 rgba(255,255,255,0.15) !important;
 }
 
+/* FORCE PRIMARY BUTTON TEXT DARK — STREAMLIT WRAPPER FIX */
+.stButton > button[kind="primary"] *,
+div[data-testid="stButton"] > button[kind="primary"] *,
+button[data-testid="baseButton-primary"] * {
+    color: #0b0e14 !important;
+    -webkit-text-fill-color: #0b0e14 !important;
+}
+
+
 /* Also catch any p/span inside the button that Streamlit may wrap text in */
 .stButton > button[kind="primary"] p,
 .stButton > button[kind="primary"] span,

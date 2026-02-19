@@ -40,6 +40,14 @@ st.set_page_config(
     layout="wide",
 )
 
+# ── VISE STYLE INJECTION ──
+try:
+    from ui_style import inject_site_css, render_hero
+    inject_site_css()
+    _STYLE_LOADED = True
+except ImportError:
+    _STYLE_LOADED = False
+
 # ------------------------
 # Google Drive Parquet loader
 # ------------------------
@@ -494,7 +502,7 @@ def compute_strategy_metrics(daily_values: np.ndarray, initial_capital: float) -
 #  LOAD DATA
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-_REQUIRED_COLS = ["TICKERSYMBOL", "PRICEDATE", "PRICECLOSE", "PRICEMID", "TRADINGITEMSTATUSID"]
+_REQUIRED_COLS = ["TRADINGITEMID", "TICKERSYMBOL", "PRICEDATE", "PRICECLOSE", "PRICEMID", "TRADINGITEMSTATUSID"]
 
 
 @st.cache_data(show_spinner=True)
@@ -644,8 +652,16 @@ run_btn = st.sidebar.button("🚀 Calculate Returns", use_container_width=True, 
 #  MAIN PAGE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-st.title("📊 Portfolio Returns Calculator")
-st.caption("Price-based returns engine · No dividends/splits in this MVP")
+if _STYLE_LOADED:
+    render_hero(
+        eyebrow="UTexas MSBA // VISE",
+        title='📊 Portfolio Returns<br><em>Calculator</em>',
+        subtitle="Price-based returns engine with tax-aware optimizer.",
+        formula='Portfolio Value &nbsp;=&nbsp; <span>(Shares × Price)</span> &nbsp;+&nbsp; Cash',
+    )
+else:
+    st.title("📊 Portfolio Returns Calculator")
+    st.caption("Price-based returns engine · No dividends/splits in this MVP")
 
 if not run_btn:
     st.info("👈 Configure your portfolio in the sidebar and press **Calculate Returns**.")
@@ -956,7 +972,6 @@ if enable_optimizer:
             _div_df["PAYDATE"] = pd.to_datetime(_div_df["PAYDATE"], errors="coerce")
             _div_df["EXDATE"] = pd.to_datetime(_div_df["EXDATE"], errors="coerce")
             if "TICKERSYMBOL" not in _div_df.columns:
-                # Try to map TRADINGITEMID → TICKERSYMBOL from prices
                 if "TRADINGITEMID" in _div_df.columns and "TRADINGITEMID" in df.columns:
                     _ticker_map = (
                         df[["TRADINGITEMID", "TICKERSYMBOL"]]
@@ -971,7 +986,6 @@ if enable_optimizer:
 
     _opt_tax_rates = {"st_rate": opt_st_rate, "lt_rate": opt_lt_rate}
     _opt_reinvest = opt_div_handling == "Reinvest dividends"
-
     _opt_tickers = holdings["Ticker"].tolist()
     _opt_weights = holdings["Weight"].tolist()
     _opt_rebal_freq = selected_freq if enable_rebalancing else "None"
@@ -979,19 +993,14 @@ if enable_optimizer:
     with st.spinner("Running MSBA v1 Static simulation…"):
         try:
             static_result = run_optimizer_simulation(
-                prices_df=df,
-                dividends_df=_div_df,
-                tickers=_opt_tickers,
-                weights=_opt_weights,
-                start_date=str(start_date),
-                end_date=str(end_date),
+                prices_df=df, dividends_df=_div_df,
+                tickers=_opt_tickers, weights=_opt_weights,
+                start_date=str(start_date), end_date=str(end_date),
                 rebalance_frequency=_opt_rebal_freq,
-                tax_rates=_opt_tax_rates,
-                tlh_threshold=opt_tlh_threshold,
+                tax_rates=_opt_tax_rates, tlh_threshold=opt_tlh_threshold,
                 reinvest_dividends=_opt_reinvest,
                 initial_capital=float(initial_capital),
-                price_field=price_field,
-                static=True,
+                price_field=price_field, static=True,
             )
         except Exception as e:
             st.error(f"MSBA v1 Static simulation failed: {e}")
@@ -1000,26 +1009,20 @@ if enable_optimizer:
     with st.spinner("Running MSBA v1 Optimized simulation…"):
         try:
             opt_result = run_optimizer_simulation(
-                prices_df=df,
-                dividends_df=_div_df,
-                tickers=_opt_tickers,
-                weights=_opt_weights,
-                start_date=str(start_date),
-                end_date=str(end_date),
+                prices_df=df, dividends_df=_div_df,
+                tickers=_opt_tickers, weights=_opt_weights,
+                start_date=str(start_date), end_date=str(end_date),
                 rebalance_frequency=_opt_rebal_freq,
-                tax_rates=_opt_tax_rates,
-                tlh_threshold=opt_tlh_threshold,
+                tax_rates=_opt_tax_rates, tlh_threshold=opt_tlh_threshold,
                 reinvest_dividends=_opt_reinvest,
                 initial_capital=float(initial_capital),
-                price_field=price_field,
-                static=False,
+                price_field=price_field, static=False,
             )
         except Exception as e:
             st.error(f"MSBA v1 Optimized simulation failed: {e}")
             opt_result = None
 
     if static_result and opt_result:
-        # KPI cards
         s_nav = static_result["nav_series"]
         o_nav = opt_result["nav_series"]
         s_final = s_nav.iloc[-1]
@@ -1027,37 +1030,20 @@ if enable_optimizer:
         cap = float(initial_capital)
 
         kc1, kc2, kc3, kc4 = st.columns(4)
-        kc1.metric("Static Final NAV", f"${s_final:,.0f}",
-                   delta=f"{(s_final/cap - 1):+.2%}")
-        kc2.metric("Optimized Final NAV", f"${o_final:,.0f}",
-                   delta=f"{(o_final/cap - 1):+.2%}")
-        kc3.metric("Optimizer Advantage", f"${o_final - s_final:+,.0f}",
-                   delta=f"{((o_final - s_final)/cap):+.4%}")
-        kc4.metric("Total Tax Paid (Opt)", f"${opt_result['tax_paid_total']:,.0f}",
-                   delta=f"Static: ${static_result['tax_paid_total']:,.0f}")
+        kc1.metric("Static Final NAV", f"${s_final:,.0f}", delta=f"{(s_final/cap - 1):+.2%}")
+        kc2.metric("Optimized Final NAV", f"${o_final:,.0f}", delta=f"{(o_final/cap - 1):+.2%}")
+        kc3.metric("Optimizer Advantage", f"${o_final - s_final:+,.0f}", delta=f"{((o_final - s_final)/cap):+.4%}")
+        kc4.metric("Total Tax Paid (Opt)", f"${opt_result['tax_paid_total']:,.0f}", delta=f"Static: ${static_result['tax_paid_total']:,.0f}")
 
-        # NAV chart
         st.markdown("#### MSBA v1 — Portfolio NAV Over Time")
-        opt_chart = pd.DataFrame({
-            "Static (TLH only)": s_nav,
-            "Optimized (Rebal + TLH)": o_nav,
-        })
-        opt_chart = opt_chart.dropna()
-        st.line_chart(
-            opt_chart,
-            color=["#888888", "#e8710a"],
-            use_container_width=True,
-            height=400,
-        )
+        opt_chart = pd.DataFrame({"Static (TLH only)": s_nav, "Optimized (Rebal + TLH)": o_nav}).dropna()
+        st.line_chart(opt_chart, color=["#888888", "#e8710a"], use_container_width=True, height=400)
 
-        # Difference chart
         if len(opt_chart) > 0:
             diff = opt_chart["Optimized (Rebal + TLH)"] - opt_chart["Static (TLH only)"]
-            diff_df = pd.DataFrame({"Optimizer Advantage ($)": diff})
             adv_color = "#34a853" if diff.iloc[-1] >= 0 else "#ea4335"
-            st.area_chart(diff_df, color=[adv_color], use_container_width=True, height=200)
+            st.area_chart(pd.DataFrame({"Optimizer Advantage ($)": diff}), color=[adv_color], use_container_width=True, height=200)
 
-        # Trade & realized gains details
         with st.expander("📋 Optimized Portfolio — Trade Log"):
             _tdf = opt_result["trades_df"]
             if not _tdf.empty:

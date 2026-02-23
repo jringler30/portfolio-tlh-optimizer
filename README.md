@@ -190,6 +190,21 @@ This project is **not intended for live trading execution**.
 
 ---
 
+## Quick Start
+
+### Run locally
+
+```bash
+git clone https://github.com/jringler30/portfolio-tlh-optimizer.git
+cd portfolio-tlh-optimizer
+pip install -r requirements.txt
+streamlit run portfolio_returns_engine_code.py
+```
+
+Then open the local Streamlit URL shown in the terminal.
+
+---
+
 ## Author
 
 Joshua Ringler

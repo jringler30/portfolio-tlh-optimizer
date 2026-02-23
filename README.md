@@ -1,7 +1,7 @@
 # 📊 Streamlit Trade TLH Optimizer
 
 ### Tax-Aware Portfolio Simulation & Optimization Engine
-
+![Dashboard](dashboard.png)
 ---
 
 ## Overview
